@@ -12,6 +12,22 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Bake location from secrets
+        working-directory: launcher
+        env:
+          LAT: ${{ secrets.LAT }}
+          LON: ${{ secrets.LON }}
+        run: |
+          python3 - <<'PY'
+          import re, os
+          p = 'app/src/main/res/values/config.xml'
+          s = open(p, encoding='utf-8').read()
+          s = re.sub(r'(<string name="latitude"[^>]*>)[^<]*(</string>)', r'\g<1>' + os.environ['LAT'] + r'\g<2>', s)
+          s = re.sub(r'(<string name="longitude"[^>]*>)[^<]*(</string>)', r'\g<1>' + os.environ['LON'] + r'\g<2>', s)
+          s = re.sub(r'(<integer name="sky_intensity">)[^<]*(</integer>)', r'\g<1>60\g<2>', s)
+          open(p, 'w', encoding='utf-8').write(s)
+          print('location baked')
+          PY
       - name: Build launcher
         working-directory: launcher
         run: |
